@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interactive Teaching Clock</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> <title>Interactive Teaching Clock (iPad Optimized)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -19,32 +18,461 @@
         justify-content: center;
         font-family: 'Inter', sans-serif;
         text-align: center;
-        background-color: #f0f4f8;
+        background-color: #f0f4f8; /* Light grey background */
         box-sizing: border-box;
-        overflow: auto;
+        overflow: auto; /* Allow scrolling if content overflows, though ideally it shouldn't */
+        -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
     }
-    /* Remaining styles omitted for brevity (you can paste the full CSS block here) */
+
+    .container {
+        padding: 1rem; /* Base padding */
+        width: 100%;
+        max-width: 680px; /* Increased max-width for better iPad layout */
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .clock {
+      position: relative;
+      /* Adjusted clamp for better iPad sizing. Max 500px. */
+      width: clamp(280px, 75vmin, 500px);
+      height: clamp(280px, 75vmin, 500px);
+      border: 10px solid #334155; /* Slightly thicker border for larger display */
+      border-radius: 50%;
+      margin: 1.5rem auto; /* Increased margin for more breathing room */
+      background: white;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1), 0 6px 15px rgba(0, 0, 0, 0.05); /* Enhanced shadow */
+      overflow: hidden;
+    }
+
+    .tick {
+      position: absolute;
+      width: 3px; /* Slightly thicker ticks */
+      height: 12px;
+      background: #526072; /* Adjusted tick color */
+      top: 50%;
+      left: 50%;
+      transform-origin: center top;
+    }
+
+    .tick.hour-tick {
+      height: 20px; /* Slightly longer hour ticks */
+      width: 4px; /* Slightly thicker hour ticks */
+      background: #2c3a4a;
+    }
+
+    .number {
+      position: absolute;
+      font-weight: 600;
+      /* Increased font size range for better readability on iPad */
+      font-size: clamp(16px, 4vmin, 28px);
+      color: #1e293b;
+      transform: translate(-50%, -50%);
+      user-select: none;
+    }
+
+    .hand {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      transform-origin: bottom center;
+      border-radius: 9999px;
+      touch-action: none; /* Essential for smooth dragging on touch devices */
+      cursor: grab;
+      transform: translateX(-50%) rotate(0deg);
+    }
+     .hand:active { cursor: grabbing; }
+
+    .hand.hour {
+      width: 10px; /* Thicker hour hand */
+      height: 27%; /* Adjusted length slightly */
+      background: #1e293b;
+      z-index: 2;
+    }
+    .hand.minute {
+      width: 7px; /* Thicker minute hand */
+      height: 37%; /* Adjusted length slightly */
+      background: #0ea5e9; /* Bright blue for minute hand */
+      z-index: 1;
+    }
+
+    .center-dot {
+      position: absolute; width: 18px; height: 18px; /* Larger center dot */
+      background: #1e293b; border-radius: 50%;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      z-index: 3; border: 3px solid white; /* Thicker border for dot */
+    }
+
+    .digital {
+      /* Increased font size range for digital display */
+      font-size: clamp(2rem, 6.5vmin, 3.2rem);
+      margin-top: 1.5rem; font-weight: bold; color: #1e293b;
+      background-color: #ffffff; padding: 0.75rem 1.5rem; /* Increased padding */
+      border-radius: 0.625rem; /* 10px */
+      box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+      display: inline-block;
+    }
+    .ampm {
+      /* Increased font size range for AM/PM */
+      font-size: clamp(1.1rem, 3.5vmin, 1.7rem); color: #64748b;
+      font-weight: normal; margin-left: 0.75rem; /* Increased margin */
+    }
+
+    .controls {
+      margin-top: 2rem; /* More space above controls */
+      max-width: 450px; /* Controls can be a bit wider */
+      width: 90%;
+      margin-left: auto; margin-right: auto;
+      background-color: #ffffff; padding: 1.25rem 1.75rem; /* Increased padding */
+      border-radius: 0.75rem; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+    .controls label {
+      font-weight: 600; display: block;
+      margin: 1rem 0 0.4rem; /* Adjusted margins */
+      color: #334155; text-align: left;
+      font-size: 1.1rem; /* Slightly larger label font */
+    }
+    input[type="range"] {
+      width: 100%; cursor: pointer; accent-color: #0ea5e9;
+      height: 10px; /* Thicker slider track */
+      border-radius: 9999px; background: #e2e8f0;
+      outline: none; margin-bottom: 0.75rem; vertical-align: middle;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none; appearance: none;
+        width: 24px; height: 24px; /* Larger slider thumb */
+        background: #0ea5e9;
+        border-radius: 50%; cursor: pointer;
+        margin-top: -7px; /* Adjust thumb position for thicker track */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Add shadow to thumb */
+    }
+    input[type="range"]::-moz-range-thumb {
+        width: 24px; height: 24px;
+        background: #0ea5e9;
+        border-radius: 50%; cursor: pointer; border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    input[type="text"] {
+      font-size: 1.2rem; /* Larger text input font */
+      padding: 0.75rem 1rem; /* More padding */
+      text-align: center;
+      width: 100%; box-sizing: border-box; border: 1px solid #cbd5e1;
+      border-radius: 0.5rem; /* 8px */
+      margin-top: 0.3rem;
+    }
+     input[type="text"]:focus {
+        outline: 2px solid transparent; outline-offset: 2px;
+        border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.5); /* Thicker focus ring */
+     }
+    .message-box {
+        position: fixed; top: 15px;
+        left: 50%; transform: translateX(-50%);
+        background-color: #fef2f2; color: #b91c1c;
+        padding: 0.8rem 1.3rem; border: 1px solid #fecaca;
+        border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1000; display: none; font-size: 1rem; /* Larger message font */
+        font-weight: 500;
+        opacity: 0; transition: opacity 0.5s ease-in-out;
+    }
+    #randomTimeBtn {
+        display: block; width: 100%; margin-top: 1.5rem; /* More margin */
+        padding: 0.85rem 1.2rem; /* Larger button padding */
+        font-size: 1.1rem; /* Larger button font */
+        font-weight: 600;
+        color: white; background-color: #10b981; border: none;
+        border-radius: 0.5rem; cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+    }
+    #randomTimeBtn:hover { background-color: #059669; } /* Hover for mouse users */
+    #randomTimeBtn:active { background-color: #047857; } /* Active state for touch feedback */
+    #randomTimeBtn:focus {
+        outline: 2px solid transparent; outline-offset: 2px;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.5); /* Thicker focus ring */
+    }
   </style>
 </head>
 <body>
+
 <div class="container">
-  <div class="clock" id="clock"><div class="center-dot"></div></div>
-  <div class="digital" id="digital">
-    <span id="digitalTime">00:00</span> <span class="ampm" id="ampm">AM</span>
-  </div>
-  <div class="controls">
-    <label for="hourSlider">Hour</label>
-    <input type="range" id="hourSlider" min="0" max="23" step="1" value="0">
-    <label for="minuteSlider">Minute</label>
-    <input type="range" id="minuteSlider" min="0" max="59" step="1" value="0">
-    <label for="manualInput">Set Time Manually (HH:MM)</label>
-    <input type="text" id="manualInput" placeholder="e.g., 07:30 or 19:30">
-    <button id="randomTimeBtn">Set Random Time</button>
-  </div>
+    <div class="clock" id="clock">
+       <div class="center-dot"></div>
+    </div>
+
+    <div class="digital" id="digital">
+      <span id="digitalTime">00:00</span> <span class="ampm" id="ampm">AM</span>
+    </div>
+
+    <div class="controls">
+      <label for="hourSlider">Hour</label>
+      <input type="range" id="hourSlider" min="0" max="23" step="1" value="0">
+      <label for="minuteSlider">Minute</label>
+      <input type="range" id="minuteSlider" min="0" max="59" step="1" value="0">
+      <label for="manualInput">Set Time Manually (HH:MM)</label>
+      <input type="text" id="manualInput" placeholder="e.g., 07:30 or 19:30">
+      <button id="randomTimeBtn">Set Random Time</button>
+    </div>
 </div>
+
+
 <div id="messageBox" class="message-box"></div>
+
 <script>
-  // Initialization and JavaScript logic here (You can paste your JS code here)
+  // DOM Element references
+  let hourHand, minuteHand, digitalTime, ampm, hourSlider, minuteSlider, manualInput, clock, messageBox, randomTimeBtn, centerDot;
+
+  // State variables
+  let currentHour = 0;
+  let currentMinute = 0;
+  let activeHand = null;
+  let isDragging = false;
+
+  // --- Clock Face Generation ---
+  function createClockFace() {
+    if (!clock) return;
+    clock.innerHTML = '<div class="center-dot"></div>';
+    centerDot = clock.querySelector('.center-dot');
+
+    hourHand = document.createElement('div');
+    hourHand.className = 'hand hour';
+    hourHand.id = 'hourHand';
+    clock.appendChild(hourHand);
+
+    minuteHand = document.createElement('div');
+    minuteHand.className = 'hand minute';
+    minuteHand.id = 'minuteHand';
+    clock.appendChild(minuteHand);
+
+    addDragListenersToHands();
+
+    const numberRadiusPercent = 85;
+    // Loop for numbers 1-12
+    for (let i = 1; i <= 12; i++) {
+      const number = document.createElement('div');
+      number.className = 'number';
+      number.textContent = i;
+      const angle = (i / 12) * 360 - 90;
+      const angleRad = angle * Math.PI / 180;
+      number.style.left = `${50 + (numberRadiusPercent / 2) * Math.cos(angleRad)}%`;
+      number.style.top = `${50 + (numberRadiusPercent / 2) * Math.sin(angleRad)}%`;
+      clock.appendChild(number);
+    }
+
+    // Loop for ticks 0-59
+    for (let i = 0; i < 60; i++) {
+        const tick = document.createElement('div');
+        const isHourTick = i % 5 === 0;
+        tick.className = `tick ${isHourTick ? 'hour-tick' : ''}`;
+        const angle = (i / 60) * 360;
+        // Using 40% as a base to place the start of the tick from the center
+        // This means ticks extend from 40% to (40% + tick_height_as_percentage_of_radius)
+        const tickStartOffsetPercent = isHourTick ? 38 : 42; // Start hour ticks slightly more inward
+
+        tick.style.transform = `translate(-50%, -50%) rotate(${angle}deg) translateY(-${tickStartOffsetPercent}%)`;
+        clock.appendChild(tick);
+    }
+  }
+
+  // --- Time Update Logic ---
+  function setTime(h, m, updateInput = true) {
+    if (!hourHand || !minuteHand) return;
+    h = Math.round(h) % 24;
+    m = Math.round(m) % 60;
+    currentHour = h;
+    currentMinute = m;
+
+    const hourAngle = (currentHour % 12 + currentMinute / 60) * 30;
+    const minuteAngle = currentMinute * 6;
+
+    hourHand.style.transform = `translateX(-50%) rotate(${hourAngle}deg)`;
+    minuteHand.style.transform = `translateX(-50%) rotate(${minuteAngle}deg)`;
+
+    const displayHour = currentHour % 12 === 0 ? 12 : currentHour % 12;
+    const isAM = currentHour < 12;
+    digitalTime.textContent = `${String(displayHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+    ampm.textContent = isAM ? 'AM' : 'PM';
+
+    hourSlider.value = currentHour;
+    minuteSlider.value = currentMinute;
+
+    if (updateInput) {
+        manualInput.value = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+    }
+  }
+
+  // --- Event Handling ---
+  function getAngle(e, center) {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const x = clientX - center.x;
+    const y = clientY - center.y;
+    return (Math.atan2(y, x) * 180 / Math.PI + 90 + 360) % 360;
+  }
+
+  function updateFromAngle(angle, hand) {
+      let h = currentHour;
+      let m = currentMinute;
+
+      if (hand === minuteHand) {
+          m = Math.round(angle / 6) % 60;
+          const prevMinuteAngle = (currentMinute * 6 + 360) % 360;
+          if (Math.abs(angle - prevMinuteAngle) > 180) {
+              if (angle < prevMinuteAngle) h = (h + 1) % 24;
+              else h = (h + 23) % 24;
+          }
+      } else if (hand === hourHand) {
+          const hourFraction = angle / 30;
+          let targetTwelveHour = hourFraction % 12;
+          let potentialH = Math.floor(targetTwelveHour);
+
+          // Simplified AM/PM logic, mainly driven by minute hand crossing 12
+          // or significant hour hand drag across 12.
+          const currentTwelveSystemHour = currentHour % 12;
+
+          if (currentHour >= 12) { // Currently PM
+            h = (potentialH === 0) ? 12 : potentialH + 12; // 0 angle is 12 PM
+            if (h === 24) h = 12; // Correct 24 to 12 for noon/midnight
+             // Check if dragged from AM to PM (e.g. 10 AM to 2 PM)
+            if (currentTwelveSystemHour >= 9 && potentialH <= 3 && currentHour < 12) {
+                // No change, already handled by +12
+            }
+          } else { // Currently AM
+            h = potentialH;
+             // Check if dragged from PM to AM (e.g. 10 PM to 2 AM)
+            if (currentTwelveSystemHour >= 9 && potentialH <= 3 && currentHour >=12) {
+                 // No change, already handled
+            }
+          }
+          h = h % 24;
+          m = Math.round((targetTwelveHour - Math.floor(targetTwelveHour)) * 60) % 60;
+      }
+      setTime(h, m);
+  }
+
+  // --- Drag Handlers ---
+  function startDrag(handElement, e) {
+    e.preventDefault(); // Important for touch to prevent scrolling
+    activeHand = handElement;
+    isDragging = true;
+    if (activeHand) activeHand.style.cursor = 'grabbing';
+    // Add listeners to document for wider drag area
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('touchmove', dragMove, { passive: false }); // passive:false to allow preventDefault
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchend', stopDrag);
+  }
+
+  function stopDrag() {
+    if (!isDragging) return;
+    if (activeHand) activeHand.style.cursor = 'grab';
+    isDragging = false;
+    activeHand = null;
+    document.removeEventListener('mousemove', dragMove);
+    document.removeEventListener('touchmove', dragMove);
+    document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchend', stopDrag);
+  }
+
+  function dragMove(e) {
+    if (!isDragging || !activeHand) return;
+    e.preventDefault(); // Prevent scrolling during drag
+    const rect = clock.getBoundingClientRect();
+    const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    const angle = getAngle(e, center);
+    updateFromAngle(angle, activeHand);
+  }
+
+  function addDragListenersToHands() {
+      if (hourHand && minuteHand) {
+          ['mousedown', 'touchstart'].forEach(evt => {
+              hourHand.addEventListener(evt, e => startDrag(hourHand, e));
+              minuteHand.addEventListener(evt, e => startDrag(minuteHand, e));
+          });
+      }
+  }
+
+  // --- Input Element Listeners ---
+  function setupInputListeners() {
+      hourSlider.addEventListener('input', () => setTime(Number(hourSlider.value), currentMinute));
+      minuteSlider.addEventListener('input', () => setTime(currentHour, Number(minuteSlider.value)));
+      randomTimeBtn.addEventListener('click', () => {
+          setTime(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
+      });
+      manualInput.addEventListener('change', () => {
+          const match = manualInput.value.trim().match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+          if (match) {
+              setTime(parseInt(match[1], 10), parseInt(match[2], 10), false);
+          } else {
+              showMessage("Invalid format. Use HH:MM (e.g., 07:30 or 19:45).");
+              manualInput.value = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+          }
+      });
+      // Keyboard listeners
+       document.addEventListener('keydown', e => {
+            if (document.activeElement === hourSlider || document.activeElement === minuteSlider || document.activeElement === manualInput) {
+                let h = currentHour, m = currentMinute, timeChanged = false;
+                switch (e.key) {
+                    case 'ArrowUp':
+                        if (document.activeElement === hourSlider) { h = (h + 1) % 24; timeChanged = true; }
+                        else if (document.activeElement === minuteSlider) { m = (m + 1) % 60; timeChanged = true; }
+                        break;
+                    case 'ArrowDown':
+                        if (document.activeElement === hourSlider) { h = (h + 23) % 24; timeChanged = true; }
+                        else if (document.activeElement === minuteSlider) { m = (m + 59) % 60; timeChanged = true; }
+                        break;
+                    case 'ArrowRight':
+                        if (document.activeElement === hourSlider) { m = (m + 1) % 60; timeChanged = true;}
+                        else if (document.activeElement === minuteSlider) { m = (m + 5) % 60; timeChanged = true; }
+                        break;
+                    case 'ArrowLeft':
+                        if (document.activeElement === hourSlider) { m = (m + 59) % 60; timeChanged = true;}
+                        else if (document.activeElement === minuteSlider) { m = (m + 55) % 60; timeChanged = true; }
+                        break;
+                }
+                if (timeChanged) { e.preventDefault(); setTime(h, m); }
+            }
+        });
+  }
+
+  function showMessage(text, duration = 3000) {
+      messageBox.textContent = text;
+      messageBox.style.display = 'block';
+      void messageBox.offsetWidth; // Trigger reflow
+      messageBox.style.opacity = 1;
+      setTimeout(() => {
+          messageBox.style.opacity = 0;
+          setTimeout(() => { messageBox.style.display = 'none'; }, 500);
+      }, duration);
+  }
+
+  // --- Initialization ---
+  function initializeClock() {
+      digitalTime = document.getElementById('digitalTime');
+      ampm = document.getElementById('ampm');
+      hourSlider = document.getElementById('hourSlider');
+      minuteSlider = document.getElementById('minuteSlider');
+      manualInput = document.getElementById('manualInput');
+      clock = document.getElementById('clock');
+      messageBox = document.getElementById('messageBox');
+      randomTimeBtn = document.getElementById('randomTimeBtn');
+
+      createClockFace();
+      setupInputListeners();
+      setTime(7, 9); // Initial time
+  }
+
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+         createClockFace();
+         setTime(currentHour, currentMinute); // Re-apply time to position new hands
+      }, 250);
+  });
+
+  document.addEventListener('DOMContentLoaded', initializeClock);
+
 </script>
 </body>
 </html>
